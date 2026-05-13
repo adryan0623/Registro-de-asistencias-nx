@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel NX - Ultra v4.6</title>
+    <title>Panel NX - LYNX RAZE v4.7</title>
     <style>
+        /* Se mantiene tu diseño original al 100% */
         body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: #1a1a1a; padding: 25px; border-radius: 15px; border-top: 4px solid #ff4b2b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 500px; margin-bottom: 20px; }
         h2 { text-align: center; color: #ff4b2b; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -112,6 +113,7 @@
   let idSeleccionado = null;
   let currentFilter = "semana";
 
+  // --- CANDADO 1: Filtrar basura en la lista (evita que aparezca la "F") ---
   window.mostrarListaCompleta = function() {
       const cuerpo = document.getElementById('cuerpoLista');
       cuerpo.innerHTML = "<tr><td colspan='3' style='text-align:center'>Conectando...</td></tr>";
@@ -119,6 +121,9 @@
           cuerpo.innerHTML = "";
           const data = snap.val() || {};
           for (const id in data) {
+              // Si el ID es una sola letra o muy corto, lo ignoramos para la lista
+              if (id.length < 5) continue; 
+
               const j = data[id];
               let total = 0;
               if(j.asistencias) Object.values(j.asistencias).forEach(v => total += v);
@@ -156,30 +161,37 @@
       });
   };
 
+  // --- CANDADO 2: Validación estricta al registrar ---
   window.registrarJugador = function() {
       const id = document.getElementById('idJugador').value.trim();
-      if(!id) return;
+      const nombre = document.getElementById('nombreJuego').value.trim();
+
+      // Si el ID es muy corto (ej: una sola "F") o falta el nombre, cancelamos
+      if(id.length < 5 || nombre === "") {
+          alert("❌ Error: ID demasiado corto (mín. 5) o falta el nombre.");
+          return;
+      }
       
-      // Lógica de fecha automática: si está vacío, usa el día actual
       let fecha = document.getElementById('fechaIngreso').value;
       if(!fecha) {
           fecha = new Date().toISOString().split('T')[0];
       }
 
       const datos = { 
-          nombre: document.getElementById('nombreJuego').value, 
+          nombre: nombre, 
           discord: document.getElementById('nombreDC').value, 
           telefono: document.getElementById('telefono').value, 
           ingreso: fecha 
       };
       
+      // Update asegura que no borremos las asistencias al editar datos personales
       update(ref(db, 'jugadores/' + id), datos).then(() => { 
           resetForm(); 
-          alert("¡Jugador guardado con éxito!"); 
+          mostrarListaCompleta();
+          alert("✅ Jugador guardado con éxito!"); 
       });
   };
 
-  // --- El resto del código se mantiene exactamente igual ---
   window.ejecutarCargarEdicion = function() {
       const id = idSeleccionado;
       cerrarModal('modalPerfil');
@@ -260,6 +272,9 @@
   window.abrirModalAsist = (id) => { idSeleccionado = id; document.getElementById('modalHora').style.display = "flex"; };
   
   window.confirmarAsistencia = function() {
+      // --- CANDADO 3: Prevenir suma accidental si no hay ID ---
+      if(!idSeleccionado) return;
+
       const hora = document.getElementById('horaAsistencia').value.replace(':', '_');
       runTransaction(ref(db, `jugadores/${idSeleccionado}/asistencias/${hora}`), (c) => (c || 0) + 1).then(() => { 
           cerrarModal('modalHora'); 
@@ -287,9 +302,13 @@
       document.getElementById('form-title').innerText = "➕ Registrar Jugador";
       document.getElementById('btn-save').innerText = "GUARDAR JUGADOR";
       document.getElementById('btn-cancel-edit').style.display = "none";
+      idSeleccionado = null; // Limpiamos memoria
   };
 
-  window.cerrarModal = (id) => document.getElementById(id).style.display = "none";
+  window.cerrarModal = (id) => {
+      document.getElementById(id).style.display = "none";
+      // No limpiamos idSeleccionado aquí para que el perfil no pierda la referencia al abrir otros sub-modales
+  };
 </script>
 </body>
 </html>
