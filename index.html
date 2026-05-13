@@ -3,76 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel NX - Élite v3.0</title>
+    <title>Panel NX - Ultra v4.6</title>
     <style>
         body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: #1a1a1a; padding: 25px; border-radius: 15px; border-top: 4px solid #ff4b2b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 500px; margin-bottom: 20px; }
         h2 { text-align: center; color: #ff4b2b; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
-        input { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: white; box-sizing: border-box; }
-        input:focus { border-color: #ff4b2b; outline: none; }
+        input { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: white; box-sizing: border-box; margin-top: 5px; }
         button { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff416c, #ff4b2b); border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:active { transform: scale(0.98); }
-        .btn-asistencia { background: linear-gradient(45deg, #2ecc71, #27ae60); margin-top: 5px; padding: 8px; font-size: 0.8em; }
-        .btn-peligro { background: linear-gradient(45deg, #800000, #ff0000); margin-top: 20px; }
-        .resultado-card { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #ff4b2b; position: relative; }
-        .resultado-card p { margin: 5px 0; font-size: 0.9em; }
-        #mensajeRegistro, #mensajeAdmin { text-align: center; margin-top: 15px; font-size: 0.8em; }
         
-        /* Estilos para la lista completa */
-        .tabla-miembros { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85em; }
-        .tabla-miembros th { color: #ff4b2b; text-align: left; border-bottom: 1px solid #333; padding: 10px 5px; }
-        .tabla-miembros td { padding: 10px 5px; border-bottom: 1px solid #222; }
+        .tabla-miembros { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .tabla-miembros th { color: #ff4b2b; text-align: left; padding: 10px 5px; font-size: 0.9em; border-bottom: 1px solid #333; }
+        .tabla-miembros td { padding: 12px 5px; border-bottom: 1px solid #222; vertical-align: middle; }
+        .nombre-id { cursor: pointer; }
+        .nombre-id b { display: block; font-size: 1em; color: white; }
+        .nombre-id span { font-size: 0.75em; color: #888; }
+        .btn-mas-uno { background: #2ecc71; padding: 8px 20px; border-radius: 8px; font-weight: bold; }
+
+        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; border: 2px solid #ff4b2b; text-align: center; }
+        .info-perfil { text-align: left; background: #222; padding: 15px; border-radius: 10px; margin: 15px 0; }
+        .info-perfil p { margin: 5px 0; font-size: 0.9em; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .asistencia-tag { background: #333; padding: 4px 8px; border-radius: 5px; margin: 3px; display: inline-block; border: 1px solid #ff4b2b; font-size: 0.8em; }
+        .resultado-card { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #f1c40f; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>➕ Registrar Jugador</h2>
-    <div class="input-group"><input type="text" id="idJugador" placeholder="ID del Jugador"></div>
-    <div class="input-group"><input type="text" id="nombreJuego" placeholder="Nombre en Juego (Nick)"></div>
-    <div class="input-group"><input type="text" id="nombreDC" placeholder="Usuario Discord"></div>
-    <div class="input-group"><input type="tel" id="telefono" placeholder="Número de Teléfono"></div>
-    <div class="input-group"><label>Fecha de Ingreso</label><input type="date" id="fechaIngreso"></div>
-    <button onclick="registrarJugador()">GUARDAR JUGADOR</button>
-    <div id="mensajeRegistro"></div>
+    <h2 id="form-title">➕ Registrar Jugador</h2>
+    <input type="hidden" id="edit-id">
+    <input type="text" id="idJugador" placeholder="ID del Jugador">
+    <input type="text" id="nombreJuego" placeholder="Nombre en Juego (Nick)">
+    <input type="text" id="nombreDC" placeholder="Usuario Discord">
+    <input type="tel" id="telefono" placeholder="Número de Teléfono">
+    <small style="color: #888; display: block; margin-top: 10px;">Fecha de ingreso (dejar vacío para hoy):</small>
+    <input type="date" id="fechaIngreso">
+    <button id="btn-save" onclick="registrarJugador()">GUARDAR JUGADOR</button>
+    <button id="btn-cancel-edit" onclick="resetForm()" style="display:none; background:#555;">CANCELAR EDICIÓN</button>
 </div>
 
 <div class="container">
-    <h2>🔍 Buscar Jugador</h2>
-    <div class="input-group">
-        <input type="text" id="campoBusqueda" placeholder="Buscar por ID, Nombre o Fecha..." oninput="buscarJugador()">
-    </div>
+    <h2>🔍 Buscador Pro</h2>
+    <button onclick="toggleFilterMode()" id="filter-mode" style="background:#f1c40f; color:black; margin-bottom:10px;">MODO: SEMANA ACTUAL</button>
+    <input type="text" id="campoBusqueda" placeholder="Buscar por ID o nombre..." oninput="buscarJugador()">
     <div id="resultadosBusqueda"></div>
 </div>
 
 <div class="container">
     <h2>📋 Lista de Miembros</h2>
     <button onclick="mostrarListaCompleta()" style="background: #333;">ACTUALIZAR LISTA</button>
-    <div id="listaCompletaContenedor">
-        <table class="tabla-miembros">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Asist.</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoLista"></tbody>
-        </table>
-    </div>
+    <table class="tabla-miembros">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th style="text-align:center">Asist.</th>
+                <th style="text-align:right">Acción</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoLista"></tbody>
+    </table>
+</div>
+
+<div class="container">
+    <h2>📂 Historial General</h2>
+    <button onclick="verHistorialCompleto()" style="background: #2a2a2a;">CARGAR SEMANAS PASADAS</button>
+    <div id="historialContenedor" style="margin-top:15px; font-size: 0.9em;"></div>
 </div>
 
 <div class="container" style="border-top-color: #ff0000;">
     <h2>⚙️ Cierre Semanal</h2>
-    <button class="btn-peligro" onclick="cerrarSemana()">GUARDAR HISTORIAL Y REINICIAR ASISTENCIAS</button>
-    <div id="mensajeAdmin"></div>
+    <button style="background: #ff0000;" onclick="cerrarSemana()">GUARDAR HISTORIAL Y REINICIAR ASISTENCIAS</button>
 </div>
+
+<div id="modalHora" class="modal"><div class="modal-content">
+    <h3>Hora de Actividad</h3>
+    <input type="time" id="horaAsistencia" value="20:00">
+    <button onclick="confirmarAsistencia()">CONFIRMAR (+1)</button>
+    <button onclick="cerrarModal('modalHora')" style="background:#444;">SALIR</button>
+</div></div>
+
+<div id="modalPerfil" class="modal"><div class="modal-content">
+    <h2 id="perf-nick" style="margin:0">NICK</h2>
+    <span id="perf-id" style="color:#888">ID: 0000</span>
+    <div class="info-perfil" id="perf-info"></div>
+    <div id="perf-horas" style="margin-bottom:15px"></div>
+    <button onclick="ejecutarCargarEdicion()" style="background:#3498db">EDITAR DATOS</button>
+    <button onclick="ejecutarEliminar()" style="background:#e74c3c">ELIMINAR DEL CLAN</button>
+    <button onclick="cerrarModal('modalPerfil')" style="background:#444;">CERRAR</button>
+</div></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, get, child, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDs_OhaoON0akTbIyWpcQSGQTLtxWZqCpI",
@@ -87,98 +109,187 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // --- REGISTRO ---
+  let idSeleccionado = null;
+  let currentFilter = "semana";
+
+  window.mostrarListaCompleta = function() {
+      const cuerpo = document.getElementById('cuerpoLista');
+      cuerpo.innerHTML = "<tr><td colspan='3' style='text-align:center'>Conectando...</td></tr>";
+      get(child(ref(db), 'jugadores')).then((snap) => {
+          cuerpo.innerHTML = "";
+          const data = snap.val() || {};
+          for (const id in data) {
+              const j = data[id];
+              let total = 0;
+              if(j.asistencias) Object.values(j.asistencias).forEach(v => total += v);
+              cuerpo.innerHTML += `
+                  <tr>
+                      <td class="nombre-id" onclick="abrirPerfil('${id}')">
+                          <b>${j.nombre}</b><span>${id}</span>
+                      </td>
+                      <td style="text-align:center">${total}</td>
+                      <td style="text-align:right">
+                          <button class="btn-mas-uno" onclick="abrirModalAsist('${id}')">+1</button>
+                      </td>
+                  </tr>`;
+          }
+      });
+  };
+
+  window.abrirPerfil = function(id) {
+      idSeleccionado = id;
+      get(child(ref(db), 'jugadores/' + id)).then((snap) => {
+          const j = snap.val();
+          document.getElementById('perf-nick').innerText = j.nombre;
+          document.getElementById('perf-id').innerText = "ID: " + id;
+          document.getElementById('perf-info').innerHTML = `
+              <p>📱 <b>Tel:</b> ${j.telefono || 'No registrado'}</p>
+              <p>💬 <b>Discord:</b> ${j.discord || 'No registrado'}</p>
+              <p>📅 <b>Ingreso:</b> ${j.ingreso || '---'}</p>
+          `;
+          let horasHtml = "<b>Detalle semanal:</b><br>";
+          if(j.asistencias) {
+              for(let h in j.asistencias) horasHtml += `<div class="asistencia-tag">${h.replace('_', ':')} (+${j.asistencias[h]})</div>`;
+          } else { horasHtml += "<small style='color:#888'>Sin actividad registrada</small>"; }
+          document.getElementById('perf-horas').innerHTML = horasHtml;
+          document.getElementById('modalPerfil').style.display = "flex";
+      });
+  };
+
   window.registrarJugador = function() {
       const id = document.getElementById('idJugador').value.trim();
-      if(!id) return alert("Falta ID");
-      set(ref(db, 'jugadores/' + id), {
-          nombre: document.getElementById('nombreJuego').value,
-          discord: document.getElementById('nombreDC').value,
-          telefono: document.getElementById('telefono').value,
-          ingreso: document.getElementById('fechaIngreso').value,
-          asistencias: 0
-      }).then(() => {
-          document.getElementById('mensajeRegistro').innerHTML = "✅ Guardado";
-          document.querySelectorAll('input').forEach(i => i.value = "");
+      if(!id) return;
+      
+      // Lógica de fecha automática: si está vacío, usa el día actual
+      let fecha = document.getElementById('fechaIngreso').value;
+      if(!fecha) {
+          fecha = new Date().toISOString().split('T')[0];
+      }
+
+      const datos = { 
+          nombre: document.getElementById('nombreJuego').value, 
+          discord: document.getElementById('nombreDC').value, 
+          telefono: document.getElementById('telefono').value, 
+          ingreso: fecha 
+      };
+      
+      update(ref(db, 'jugadores/' + id), datos).then(() => { 
+          resetForm(); 
+          alert("¡Jugador guardado con éxito!"); 
       });
   };
 
-  // --- SUMAR ASISTENCIA (+1) ---
-  window.sumarAsistencia = function(id) {
-      const asistenciaRef = ref(db, 'jugadores/' + id + '/asistencias');
-      runTransaction(asistenciaRef, (currentValue) => {
-          return (currentValue || 0) + 1;
-      }).then(() => {
-          buscarJugador(); // Refrescar buscador
-          mostrarListaCompleta(); // Refrescar lista
+  // --- El resto del código se mantiene exactamente igual ---
+  window.ejecutarCargarEdicion = function() {
+      const id = idSeleccionado;
+      cerrarModal('modalPerfil');
+      get(child(ref(db), 'jugadores/' + id)).then((snap) => {
+          const j = snap.val();
+          document.getElementById('idJugador').value = id;
+          document.getElementById('idJugador').disabled = true;
+          document.getElementById('edit-id').value = id;
+          document.getElementById('nombreJuego').value = j.nombre;
+          document.getElementById('nombreDC').value = j.discord;
+          document.getElementById('telefono').value = j.telefono;
+          document.getElementById('fechaIngreso').value = j.ingreso;
+          document.getElementById('form-title').innerText = "✏️ Modificando Datos";
+          document.getElementById('btn-save').innerText = "GUARDAR CAMBIOS";
+          document.getElementById('btn-cancel-edit').style.display = "block";
+          window.scrollTo(0,0);
       });
   };
 
-  // --- BUSCADOR ---
+  window.ejecutarEliminar = function() {
+      if(confirm("¿Estás seguro de eliminar a este miembro del clan?")) {
+          remove(ref(db, 'jugadores/' + idSeleccionado)).then(() => { 
+              cerrarModal('modalPerfil'); 
+              mostrarListaCompleta(); 
+          });
+      }
+  };
+
+  window.toggleFilterMode = function() {
+      currentFilter = (currentFilter === "semana") ? "total" : "semana";
+      document.getElementById('filter-mode').innerText = `MODO: ${currentFilter === "semana" ? "SEMANA ACTUAL" : "HISTORIAL TOTAL"}`;
+      buscarJugador();
+  };
+
   window.buscarJugador = function() {
       const query = document.getElementById('campoBusqueda').value.toLowerCase();
       const contenedor = document.getElementById('resultadosBusqueda');
       contenedor.innerHTML = "";
       if(query.length < 2) return;
-
-      get(child(ref(db), 'jugadores')).then((snap) => {
+      const path = (currentFilter === "semana") ? 'jugadores' : 'historial';
+      get(child(ref(db), path)).then((snap) => {
           if (snap.exists()) {
               const data = snap.val();
-              for (const id in data) {
-                  const j = data[id];
-                  if (`${id} ${j.nombre} ${j.ingreso}`.toLowerCase().includes(query)) {
-                      contenedor.innerHTML += `
-                          <div class="resultado-card">
-                              <strong>${j.nombre}</strong> (ID: ${id})
-                              <p>📱 Tel: ${j.telefono || 'N/A'} | 💬 DC: ${j.discord || 'N/A'}</p>
-                              <p>📅 Ingreso: ${j.ingreso || 'Veterano'}</p>
-                              <p style="color:#2ecc71; font-weight:bold;">⚔️ Asistencias: ${j.asistencias}</p>
-                              <button class="btn-asistencia" onclick="sumarAsistencia('${id}')">MARCAR ASISTENCIA (+1)</button>
-                          </div>`;
-                  }
-              }
+              if(currentFilter === "semana") procesarRes(data, query, contenedor);
+              else for(let f in data) procesarRes(data[f], query, contenedor, f);
           }
       });
   };
 
-  // --- MOSTRAR LISTA COMPLETA ---
-  window.mostrarListaCompleta = function() {
-      const cuerpo = document.getElementById('cuerpoLista');
-      cuerpo.innerHTML = "Cargando...";
-      get(child(ref(db), 'jugadores')).then((snap) => {
-          cuerpo.innerHTML = "";
-          if (snap.exists()) {
-              const data = snap.val();
-              for (const id in data) {
-                  const j = data[id];
-                  cuerpo.innerHTML += `
-                      <tr>
-                          <td><strong>${j.nombre}</strong><br><small>${id}</small></td>
-                          <td style="text-align:center">${j.asistencias}</td>
-                          <td><button class="btn-asistencia" onclick="sumarAsistencia('${id}')">+1</button></td>
-                      </tr>`;
-              }
+  function procesarRes(jugs, q, cont, f = null) {
+      for (const id in jugs) {
+          const j = jugs[id];
+          if (`${id} ${j.nombre}`.toLowerCase().includes(q)) {
+              let t = 0; if(j.asistencias) Object.values(j.asistencias).forEach(v => t += v);
+              cont.innerHTML += `<div class="resultado-card">
+                  <b>${j.nombre}</b> (${id}) ${f ? `<br><small style="color:#f1c40f">Semana: ${f}</small>` : ''}
+                  <p>Asistencias: ${t}</p>
+                  ${!f ? `<button onclick="abrirPerfil('${id}')" style="padding:5px; font-size:0.7em; background:#444;">VER PERFIL</button>` : ''}
+              </div>`;
           }
+      }
+  }
+
+  window.verHistorialCompleto = function() {
+      get(child(ref(db), 'historial')).then((snap) => {
+          const data = snap.val() || {};
+          let html = "<ul style='list-style:none; padding:0'>";
+          for(let f in data) {
+              const num = Object.keys(data[f]).length;
+              html += `<li style="background:#222; padding:10px; border-radius:5px; margin-bottom:5px; border-left:3px solid #ff4b2b">
+                📅 <b>Semana ${f}:</b> ${num} integrantes.
+              </li>`;
+          }
+          document.getElementById('historialContenedor').innerHTML = html + "</ul>";
       });
   };
 
-  // --- CIERRE SEMANAL ---
+  window.abrirModalAsist = (id) => { idSeleccionado = id; document.getElementById('modalHora').style.display = "flex"; };
+  
+  window.confirmarAsistencia = function() {
+      const hora = document.getElementById('horaAsistencia').value.replace(':', '_');
+      runTransaction(ref(db, `jugadores/${idSeleccionado}/asistencias/${hora}`), (c) => (c || 0) + 1).then(() => { 
+          cerrarModal('modalHora'); 
+          mostrarListaCompleta(); 
+      });
+  };
+
   window.cerrarSemana = function() {
-      if(!confirm("¿Cerrar semana?")) return;
-      const fecha = new Date().toISOString().split('T')[0];
+      if(!confirm("¿Deseas cerrar la semana actual y archivarla?")) return;
       get(child(ref(db), 'jugadores')).then((snap) => {
           if (snap.exists()) {
-              const players = snap.val();
-              const updates = {};
-              updates['historial/' + fecha] = players;
-              for (const id in players) updates['jugadores/' + id + '/asistencias'] = 0;
-              update(ref(db), updates).then(() => {
-                  alert("✅ Reiniciado");
-                  mostrarListaCompleta();
-              });
+              const p = snap.val();
+              const fecha = new Date().toISOString().split('T')[0];
+              const ups = {};
+              ups['historial/' + fecha] = p;
+              for (const id in p) ups['jugadores/' + id + '/asistencias'] = null;
+              update(ref(db), ups).then(() => { alert("¡Semana archivada con éxito!"); mostrarListaCompleta(); });
           }
       });
   };
+
+  window.resetForm = function() {
+      document.querySelectorAll('input').forEach(i => i.value = "");
+      document.getElementById('idJugador').disabled = false;
+      document.getElementById('form-title').innerText = "➕ Registrar Jugador";
+      document.getElementById('btn-save').innerText = "GUARDAR JUGADOR";
+      document.getElementById('btn-cancel-edit').style.display = "none";
+  };
+
+  window.cerrarModal = (id) => document.getElementById(id).style.display = "none";
 </script>
 </body>
 </html>
