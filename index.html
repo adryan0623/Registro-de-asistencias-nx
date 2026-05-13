@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel NX - Élite v2.0</title>
+    <style>
+        body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: #1a1a1a; padding: 25px; border-radius: 15px; border-top: 4px solid #ff4b2b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 450px; margin-bottom: 20px; }
+        h2 { text-align: center; color: #ff4b2b; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
+        input { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: white; box-sizing: border-box; }
+        input:focus { border-color: #ff4b2b; outline: none; }
+        button { width: 100%; padding: 15px; background: linear-gradient(45deg, #ff416c, #ff4b2b); border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:active { transform: scale(0.98); }
+        .btn-peligro { background: linear-gradient(45deg, #800000, #ff0000); margin-top: 20px; }
+        .resultado-card { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2ecc71; }
+        #mensajeRegistro, #mensajeAdmin { text-align: center; margin-top: 15px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>➕ Registrar Jugador</h2>
+    <div class="input-group"><input type="text" id="idJugador" placeholder="ID del Jugador"></div>
+    <div class="input-group"><input type="text" id="nombreJuego" placeholder="Nombre en Juego (Nick)"></div>
+    <div class="input-group"><input type="text" id="nombreDC" placeholder="Usuario Discord"></div>
+    <div class="input-group"><input type="tel" id="telefono" placeholder="Número de Teléfono"></div>
+    <div class="input-group"><label>Fecha de Ingreso</label><input type="date" id="fechaIngreso"></div>
+    <button onclick="registrarJugador()">GUARDAR JUGADOR</button>
+    <div id="mensajeRegistro"></div>
+</div>
+
+<div class="container">
+    <h2>🔍 Buscar Jugador</h2>
+    <div class="input-group">
+        <input type="text" id="campoBusqueda" placeholder="Buscar por ID, Nombre o Fecha..." oninput="buscarJugador()">
+    </div>
+    <div id="resultadosBusqueda"></div>
+</div>
+
+<div class="container" style="border-top-color: #ff0000;">
+    <h2>⚙️ Cierre Semanal</h2>
+    <button class="btn-peligro" onclick="cerrarSemana()">GUARDAR HISTORIAL Y REINICIAR ASISTENCIAS</button>
+    <div id="mensajeAdmin"></div>
+</div>
+
+<!-- NÚCLEO DE FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDs_OhaoON0akTbIyWpcQSGQTLtxWZqCpI",
+    authDomain: "control-de-asistencias-nx.firebaseapp.com",
+    databaseURL: "https://control-de-asistencias-nx-default-rtdb.firebaseio.com",
+    projectId: "control-de-asistencias-nx",
+    storageBucket: "control-de-asistencias-nx.firebasestorage.app",
+    messagingSenderId: "877168393884",
+    appId: "1:877168393884:web:f322dd83065f082cad7759"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.registrarJugador = function() {
+      const id = document.getElementById('idJugador').value.trim();
+      if(!id) return alert("¡Falta el ID!");
+
+      set(ref(db, 'jugadores/' + id), {
+          nombre: document.getElementById('nombreJuego').value,
+          discord: document.getElementById('nombreDC').value,
+          telefono: document.getElementById('telefono').value,
+          ingreso: document.getElementById('fechaIngreso').value,
+          asistencias: 0
+      }).then(() => {
+          document.getElementById('mensajeRegistro').innerHTML = "✅ Guardado en la nube";
+          document.querySelectorAll('input').forEach(i => i.value = "");
+      });
+  };
+
+  window.buscarJugador = function() {
+      const query = document.getElementById('campoBusqueda').value.toLowerCase();
+      const contenedor = document.getElementById('resultadosBusqueda');
+      contenedor.innerHTML = "";
+      if(query.length < 2) return;
+
+      get(child(ref(db), 'jugadores')).then((snap) => {
+          if (snap.exists()) {
+              const data = snap.val();
+              for (const id in data) {
+                  const j = data[id];
+                  if (`${id} ${j.nombre} ${j.ingreso}`.toLowerCase().includes(query)) {
+                      contenedor.innerHTML += `
+                          <div class="resultado-card">
+                              <strong>${j.nombre}</strong> (ID: ${id})<br>
+                              <p>📱 Tel: ${j.telefono || 'N/A'}</p>
+                              <p>💬 Discord: ${j.discord || 'N/A'}</p>
+                              <p>📅 Ingreso: ${j.ingreso || 'Veterano'}</p>
+                              <p style="color:#ff4b2b; font-weight:bold;">⚔️ Asistencias: ${j.asistencias}</p>
+                          </div>`;
+                  }
+              }
+          }
+      });
+  };
+
+  window.cerrarSemana = function() {
+      if(!confirm("¿Seguro? Se guardará el historial y las asistencias volverán a 0.")) return;
+      const fecha = new Date().toISOString().split('T')[0];
+
+      get(child(ref(db), 'jugadores')).then((snap) => {
+          if (snap.exists()) {
+              const players = snap.val();
+              const updates = {};
+              updates['historial/' + fecha] = players;
+              for (const id in players) updates['jugadores/' + id + '/asistencias'] = 0;
+
+              update(ref(db), updates).then(() => {
+                  document.getElementById('mensajeAdmin').innerHTML = "✅ Semana cerrada con éxito";
+              });
+          }
+      });
+  };
+</script>
+</body>
+</html>
