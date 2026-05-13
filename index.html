@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel NX - LYNX RAZE v4.7</title>
+    <title>Panel NX - LYNX RAZE v4.8.4</title>
     <style>
-        /* Se mantiene tu diseño original al 100% */
+        /* Estilos v4.7 ORIGINALES - Sin cambios de tamaño */
         body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: #1a1a1a; padding: 25px; border-radius: 15px; border-top: 4px solid #ff4b2b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 500px; margin-bottom: 20px; }
         h2 { text-align: center; color: #ff4b2b; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -20,8 +20,13 @@
         .nombre-id span { font-size: 0.75em; color: #888; }
         .btn-mas-uno { background: #2ecc71; padding: 8px 20px; border-radius: 8px; font-weight: bold; }
 
-        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        /* Modal de Login con estilo v4.7 */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-content { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; border: 2px solid #ff4b2b; text-align: center; }
+        .logo-login { width: 120px; margin-bottom: 15px; border-radius: 10px; }
+        .checkbox-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; font-size: 0.9em; color: #ccc; }
+        .checkbox-container input { width: auto; margin: 0; transform: scale(1.2); cursor: pointer; }
+
         .info-perfil { text-align: left; background: #222; padding: 15px; border-radius: 10px; margin: 15px 0; }
         .info-perfil p { margin: 5px 0; font-size: 0.9em; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .asistencia-tag { background: #333; padding: 4px 8px; border-radius: 5px; margin: 3px; display: inline-block; border: 1px solid #ff4b2b; font-size: 0.8em; }
@@ -29,6 +34,24 @@
     </style>
 </head>
 <body>
+
+<!-- Pantalla de Acceso LYNX RAZE -->
+<div id="login-screen" class="modal" style="display: flex;">
+    <div class="modal-content">
+        <img src="https://www.dropbox.com/scl/fi/81xsxq6xekxu8ltaiup97/NX-RAZE.png?rlkey=7vzyi0bx6viww237skgvq0nxt&raw=1" alt="Logo LYNX RAZE" class="logo-login">
+        <h2 style="border:none; margin-top:0; font-size: 1.2em;">Líderes LYNX RAZE</h2>
+        
+        <input type="text" id="login-nombre" placeholder="Nombre de Líder">
+        <input type="password" id="login-pin" inputmode="numeric" placeholder="PIN de 4 dígitos">
+        
+        <label class="checkbox-container">
+            <input type="checkbox" id="login-recordar"> Recordarme (1 semana)
+        </label>
+        
+        <div id="login-error" style="color: #e74c3c; font-size: 0.85em; margin-bottom: 10px; display: none;">❌ Datos incorrectos</div>
+        <button type="button" onclick="validarIngreso()">ENTRAR AL PANEL</button>
+    </div>
+</div>
 
 <div class="container">
     <h2 id="form-title">➕ Registrar Jugador</h2>
@@ -93,9 +116,52 @@
     <button onclick="cerrarModal('modalPerfil')" style="background:#444;">CERRAR</button>
 </div></div>
 
+<script>
+    // Configuración de Líderes LYNX RAZE
+    const LIDERES_AUTORIZADOS = ['adryan', 'anahi', 'maxito', 'lupis', 'paco', 'karllus', 'fernando'];
+    const PIN_VALIDO = '2306';
+    window.sesionNombre = "";
+
+    function validarIngreso() {
+        const user = document.getElementById('login-nombre').value.trim().toLowerCase();
+        const pin = document.getElementById('login-pin').value.trim();
+        const error = document.getElementById('login-error');
+
+        if (LIDERES_AUTORIZADOS.includes(user) && pin === PIN_VALIDO) {
+            window.sesionNombre = user.toUpperCase();
+            
+            // Guardar sesión si se marcó el checkbox
+            if (document.getElementById('login-recordar').checked) {
+                const sessionData = { user: window.sesionNombre, timestamp: Date.now() };
+                localStorage.setItem('lynx_session_v4', JSON.stringify(sessionData));
+            }
+
+            document.getElementById('login-screen').style.display = 'none';
+            window.dispatchEvent(new CustomEvent('authSuccess', { detail: window.sesionNombre }));
+        } else {
+            error.style.display = 'block';
+        }
+    }
+
+    // Auto-login al cargar si la sesión tiene menos de 7 días
+    window.addEventListener('DOMContentLoaded', () => {
+        const guardado = localStorage.getItem('lynx_session_v4');
+        if (guardado) {
+            const data = JSON.parse(guardado);
+            const unaSemana = 7 * 24 * 60 * 60 * 1000;
+            if (Date.now() - data.timestamp < unaSemana) {
+                window.sesionNombre = data.user;
+                document.getElementById('login-screen').style.display = 'none';
+                // Pequeño delay para que Firebase esté listo
+                setTimeout(() => window.dispatchEvent(new CustomEvent('authSuccess', { detail: data.user })), 1000);
+            }
+        }
+    });
+</script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, get, child, update, remove, runTransaction, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDs_OhaoON0akTbIyWpcQSGQTLtxWZqCpI",
@@ -113,30 +179,26 @@
   let idSeleccionado = null;
   let currentFilter = "semana";
 
-  // --- CANDADO 1: Filtrar basura en la lista (evita que aparezca la "F") ---
+  window.addEventListener('authSuccess', (e) => {
+      push(ref(db, 'auditoria_v4'), {
+          leader: e.detail,
+          event: "Entrada exitosa",
+          time: new Date().toLocaleString()
+      });
+  });
+
   window.mostrarListaCompleta = function() {
       const cuerpo = document.getElementById('cuerpoLista');
-      cuerpo.innerHTML = "<tr><td colspan='3' style='text-align:center'>Conectando...</td></tr>";
+      cuerpo.innerHTML = "<tr><td colspan='3' style='text-align:center'>Obteniendo datos...</td></tr>";
       get(child(ref(db), 'jugadores')).then((snap) => {
           cuerpo.innerHTML = "";
           const data = snap.val() || {};
           for (const id in data) {
-              // Si el ID es una sola letra o muy corto, lo ignoramos para la lista
               if (id.length < 5) continue; 
-
               const j = data[id];
               let total = 0;
               if(j.asistencias) Object.values(j.asistencias).forEach(v => total += v);
-              cuerpo.innerHTML += `
-                  <tr>
-                      <td class="nombre-id" onclick="abrirPerfil('${id}')">
-                          <b>${j.nombre}</b><span>${id}</span>
-                      </td>
-                      <td style="text-align:center">${total}</td>
-                      <td style="text-align:right">
-                          <button class="btn-mas-uno" onclick="abrirModalAsist('${id}')">+1</button>
-                      </td>
-                  </tr>`;
+              cuerpo.innerHTML += `<tr><td class="nombre-id" onclick="abrirPerfil('${id}')"><b>${j.nombre}</b><span>${id}</span></td><td style="text-align:center">${total}</td><td style="text-align:right"><button class="btn-mas-uno" onclick="abrirModalAsist('${id}')">+1</button></td></tr>`;
           }
       });
   };
@@ -147,48 +209,31 @@
           const j = snap.val();
           document.getElementById('perf-nick').innerText = j.nombre;
           document.getElementById('perf-id').innerText = "ID: " + id;
-          document.getElementById('perf-info').innerHTML = `
-              <p>📱 <b>Tel:</b> ${j.telefono || 'No registrado'}</p>
-              <p>💬 <b>Discord:</b> ${j.discord || 'No registrado'}</p>
-              <p>📅 <b>Ingreso:</b> ${j.ingreso || '---'}</p>
-          `;
-          let horasHtml = "<b>Detalle semanal:</b><br>";
-          if(j.asistencias) {
-              for(let h in j.asistencias) horasHtml += `<div class="asistencia-tag">${h.replace('_', ':')} (+${j.asistencias[h]})</div>`;
-          } else { horasHtml += "<small style='color:#888'>Sin actividad registrada</small>"; }
+          document.getElementById('perf-info').innerHTML = `<p>📱 <b>Tel:</b> ${j.telefono || 'No registrado'}</p><p>💬 <b>Discord:</b> ${j.discord || 'No registrado'}</p><p>📅 <b>Ingreso:</b> ${j.ingreso || '---'}</p>`;
+          let horasHtml = "<b>Actividad de la semana:</b><br>";
+          if(j.asistencias) for(let h in j.asistencias) horasHtml += `<div class="asistencia-tag">${h.replace('_', ':')} (+${j.asistencias[h]})</div>`;
+          else horasHtml += "<small style='color:#888'>Sin registros aún</small>";
           document.getElementById('perf-horas').innerHTML = horasHtml;
           document.getElementById('modalPerfil').style.display = "flex";
       });
   };
 
-  // --- CANDADO 2: Validación estricta al registrar ---
   window.registrarJugador = function() {
       const id = document.getElementById('idJugador').value.trim();
       const nombre = document.getElementById('nombreJuego').value.trim();
-
-      // Si el ID es muy corto (ej: una sola "F") o falta el nombre, cancelamos
-      if(id.length < 5 || nombre === "") {
-          alert("❌ Error: ID demasiado corto (mín. 5) o falta el nombre.");
-          return;
-      }
+      if(id.length < 5 || nombre === "") return alert("Datos obligatorios incompletos");
       
-      let fecha = document.getElementById('fechaIngreso').value;
-      if(!fecha) {
-          fecha = new Date().toISOString().split('T')[0];
-      }
-
       const datos = { 
           nombre: nombre, 
           discord: document.getElementById('nombreDC').value, 
           telefono: document.getElementById('telefono').value, 
-          ingreso: fecha 
+          ingreso: document.getElementById('fechaIngreso').value || new Date().toISOString().split('T')[0] 
       };
       
-      // Update asegura que no borremos las asistencias al editar datos personales
       update(ref(db, 'jugadores/' + id), datos).then(() => { 
           resetForm(); 
           mostrarListaCompleta();
-          alert("✅ Jugador guardado con éxito!"); 
+          alert("✅ Jugador actualizado correctamente"); 
       });
   };
 
@@ -199,12 +244,11 @@
           const j = snap.val();
           document.getElementById('idJugador').value = id;
           document.getElementById('idJugador').disabled = true;
-          document.getElementById('edit-id').value = id;
           document.getElementById('nombreJuego').value = j.nombre;
           document.getElementById('nombreDC').value = j.discord;
           document.getElementById('telefono').value = j.telefono;
           document.getElementById('fechaIngreso').value = j.ingreso;
-          document.getElementById('form-title').innerText = "✏️ Modificando Datos";
+          document.getElementById('form-title').innerText = "✏️ Editar Jugador";
           document.getElementById('btn-save').innerText = "GUARDAR CAMBIOS";
           document.getElementById('btn-cancel-edit').style.display = "block";
           window.scrollTo(0,0);
@@ -212,7 +256,7 @@
   };
 
   window.ejecutarEliminar = function() {
-      if(confirm("¿Estás seguro de eliminar a este miembro del clan?")) {
+      if(confirm("¿Seguro que deseas eliminar a este miembro?")) {
           remove(ref(db, 'jugadores/' + idSeleccionado)).then(() => { 
               cerrarModal('modalPerfil'); 
               mostrarListaCompleta(); 
@@ -223,7 +267,6 @@
   window.toggleFilterMode = function() {
       currentFilter = (currentFilter === "semana") ? "total" : "semana";
       document.getElementById('filter-mode').innerText = `MODO: ${currentFilter === "semana" ? "SEMANA ACTUAL" : "HISTORIAL TOTAL"}`;
-      buscarJugador();
   };
 
   window.buscarJugador = function() {
@@ -233,48 +276,34 @@
       if(query.length < 2) return;
       const path = (currentFilter === "semana") ? 'jugadores' : 'historial';
       get(child(ref(db), path)).then((snap) => {
-          if (snap.exists()) {
-              const data = snap.val();
-              if(currentFilter === "semana") procesarRes(data, query, contenedor);
-              else for(let f in data) procesarRes(data[f], query, contenedor, f);
+          const data = snap.val() || {};
+          if(currentFilter === "semana") {
+              for(let id in data) if(`${id} ${data[id].nombre}`.toLowerCase().includes(query)) renderCard(data[id], id, contenedor);
+          } else {
+              for(let f in data) for(let id in data[f]) if(`${id} ${data[f][id].nombre}`.toLowerCase().includes(query)) renderCard(data[f][id], id, contenedor, f);
           }
       });
   };
 
-  function procesarRes(jugs, q, cont, f = null) {
-      for (const id in jugs) {
-          const j = jugs[id];
-          if (`${id} ${j.nombre}`.toLowerCase().includes(q)) {
-              let t = 0; if(j.asistencias) Object.values(j.asistencias).forEach(v => t += v);
-              cont.innerHTML += `<div class="resultado-card">
-                  <b>${j.nombre}</b> (${id}) ${f ? `<br><small style="color:#f1c40f">Semana: ${f}</small>` : ''}
-                  <p>Asistencias: ${t}</p>
-                  ${!f ? `<button onclick="abrirPerfil('${id}')" style="padding:5px; font-size:0.7em; background:#444;">VER PERFIL</button>` : ''}
-              </div>`;
-          }
-      }
+  function renderCard(j, id, cont, f = null) {
+      let t = 0; if(j.asistencias) Object.values(j.asistencias).forEach(v => t += v);
+      cont.innerHTML += `<div class="resultado-card"><b>${j.nombre}</b> (${id})${f ? `<br><small>Semana: ${f}</small>` : ''}<p>Asistencias: ${t}</p></div>`;
   }
 
   window.verHistorialCompleto = function() {
       get(child(ref(db), 'historial')).then((snap) => {
           const data = snap.val() || {};
-          let html = "<ul style='list-style:none; padding:0'>";
-          for(let f in data) {
-              const num = Object.keys(data[f]).length;
-              html += `<li style="background:#222; padding:10px; border-radius:5px; margin-bottom:5px; border-left:3px solid #ff4b2b">
-                📅 <b>Semana ${f}:</b> ${num} integrantes.
-              </li>`;
-          }
-          document.getElementById('historialContenedor').innerHTML = html + "</ul>";
+          let html = "";
+          const keys = Object.keys(data).sort().reverse();
+          keys.forEach(f => {
+              html += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:5px; border-left:3px solid #ff4b2b">📅 <b>Semana ${f}:</b> ${Object.keys(data[f]).length} miembros registrados.</div>`;
+          });
+          document.getElementById('historialContenedor').innerHTML = html || "No hay historial disponible.";
       });
   };
 
-  window.abrirModalAsist = (id) => { idSeleccionado = id; document.getElementById('modalHora').style.display = "flex"; };
-  
   window.confirmarAsistencia = function() {
-      // --- CANDADO 3: Prevenir suma accidental si no hay ID ---
       if(!idSeleccionado) return;
-
       const hora = document.getElementById('horaAsistencia').value.replace(':', '_');
       runTransaction(ref(db, `jugadores/${idSeleccionado}/asistencias/${hora}`), (c) => (c || 0) + 1).then(() => { 
           cerrarModal('modalHora'); 
@@ -283,7 +312,7 @@
   };
 
   window.cerrarSemana = function() {
-      if(!confirm("¿Deseas cerrar la semana actual y archivarla?")) return;
+      if(!confirm("¿Confirmas el cierre semanal? Esto archivará las asistencias actuales.")) return;
       get(child(ref(db), 'jugadores')).then((snap) => {
           if (snap.exists()) {
               const p = snap.val();
@@ -291,24 +320,21 @@
               const ups = {};
               ups['historial/' + fecha] = p;
               for (const id in p) ups['jugadores/' + id + '/asistencias'] = null;
-              update(ref(db), ups).then(() => { alert("¡Semana archivada con éxito!"); mostrarListaCompleta(); });
+              update(ref(db), ups).then(() => { alert("¡Semana cerrada con éxito!"); mostrarListaCompleta(); });
           }
       });
   };
 
   window.resetForm = function() {
-      document.querySelectorAll('input').forEach(i => i.value = "");
+      document.querySelectorAll('input').forEach(i => { if(i.type !== 'checkbox') i.value = ""; });
       document.getElementById('idJugador').disabled = false;
       document.getElementById('form-title').innerText = "➕ Registrar Jugador";
-      document.getElementById('btn-save').innerText = "GUARDAR JUGADOR";
       document.getElementById('btn-cancel-edit').style.display = "none";
-      idSeleccionado = null; // Limpiamos memoria
+      idSeleccionado = null;
   };
 
-  window.cerrarModal = (id) => {
-      document.getElementById(id).style.display = "none";
-      // No limpiamos idSeleccionado aquí para que el perfil no pierda la referencia al abrir otros sub-modales
-  };
+  window.cerrarModal = (id) => document.getElementById(id).style.display = "none";
+  window.abrirModalAsist = (id) => { idSeleccionado = id; document.getElementById('modalHora').style.display = "flex"; };
 </script>
 </body>
 </html>
