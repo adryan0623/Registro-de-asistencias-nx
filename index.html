@@ -35,7 +35,6 @@
 </head>
 <body>
 
-<!-- Pantalla de Acceso LYNX RAZE -->
 <div id="login-screen" class="modal" style="display: flex;">
     <div class="modal-content">
         <img src="https://www.dropbox.com/scl/fi/81xsxq6xekxu8ltaiup97/NX-RAZE.png?rlkey=7vzyi0bx6viww237skgvq0nxt&raw=1" alt="Logo LYNX RAZE" class="logo-login">
@@ -274,20 +273,38 @@
       const contenedor = document.getElementById('resultadosBusqueda');
       contenedor.innerHTML = "";
       if(query.length < 2) return;
+      
       const path = (currentFilter === "semana") ? 'jugadores' : 'historial';
       get(child(ref(db), path)).then((snap) => {
           const data = snap.val() || {};
           if(currentFilter === "semana") {
-              for(let id in data) if(`${id} ${data[id].nombre}`.toLowerCase().includes(query)) renderCard(data[id], id, contenedor);
+              for(let id in data) {
+                  const j = data[id];
+                  // Nueva cadena de búsqueda que incluye discord y teléfono
+                  const searchString = `${id} ${j.nombre} ${j.discord || ''} ${j.telefono || ''}`.toLowerCase();
+                  if(searchString.includes(query)) renderCard(j, id, contenedor);
+              }
           } else {
-              for(let f in data) for(let id in data[f]) if(`${id} ${data[f][id].nombre}`.toLowerCase().includes(query)) renderCard(data[f][id], id, contenedor, f);
+              for(let f in data) {
+                  for(let id in data[f]) {
+                      const j = data[f][id];
+                      // Nueva cadena de búsqueda que incluye discord y teléfono
+                      const searchString = `${id} ${j.nombre} ${j.discord || ''} ${j.telefono || ''}`.toLowerCase();
+                      if(searchString.includes(query)) renderCard(j, id, contenedor, f);
+                  }
+              }
           }
       });
   };
 
   function renderCard(j, id, cont, f = null) {
       let t = 0; if(j.asistencias) Object.values(j.asistencias).forEach(v => t += v);
-      cont.innerHTML += `<div class="resultado-card"><b>${j.nombre}</b> (${id})${f ? `<br><small>Semana: ${f}</small>` : ''}<p>Asistencias: ${t}</p></div>`;
+      // Se agregó el botón VER PERFIL cuando se está en el modo de Semana Actual (!f)
+      cont.innerHTML += `<div class="resultado-card">
+          <b>${j.nombre}</b> (${id})${f ? `<br><small style="color:#f1c40f">Semana: ${f}</small>` : ''}
+          <p style="margin: 5px 0;">Asistencias: ${t}</p>
+          ${!f ? `<button onclick="abrirPerfil('${id}')" style="padding:8px; font-size:0.8em; background:#444; margin-top:5px;">VER PERFIL</button>` : ''}
+      </div>`;
   }
 
   window.verHistorialCompleto = function() {
